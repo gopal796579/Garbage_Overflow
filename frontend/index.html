@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-Powered Smart Garbage Overflow Detection System — Real-time waste bin monitoring with YOLOv8n">
+    <title>Smart Garbage Overflow Detection — AI Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- ═══ Header ═══ -->
+    <header id="app-header">
+        <div class="header-left">
+            <div class="logo-wrapper">
+                <svg class="logo-icon" viewBox="0 0 40 40" fill="none">
+                    <rect x="10" y="8" width="20" height="24" rx="3" stroke="currentColor" stroke-width="2"/>
+                    <path d="M8 12h24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M16 6h8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="20" cy="22" r="4" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M20 18v8M16 22h8" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+                </svg>
+            </div>
+            <div class="header-title">
+                <h1>Smart Garbage Detection</h1>
+                <span class="subtitle">AI-Powered Overflow Monitoring</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">Connecting…</span>
+            </div>
+            <div class="header-stats">
+                <div class="stat-chip" id="fpsChip">
+                    <span class="stat-label">FPS</span>
+                    <span class="stat-value" id="fpsValue">--</span>
+                </div>
+                <div class="stat-chip" id="modelChip">
+                    <span class="stat-label">Model</span>
+                    <span class="stat-value">YOLOv8n</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══ Main Content ═══ -->
+    <main id="dashboard">
+        <!-- Row 1: Video + Status -->
+        <div class="dashboard-grid">
+            <!-- Live Video Feed -->
+            <section class="card video-card" id="videoCard">
+                <div class="card-header">
+                    <h2>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="23 7 16 12 23 17 23 7"/>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                        </svg>
+                        Live Feed
+                    </h2>
+                    <div class="live-badge" id="liveBadge">
+                        <span class="live-dot"></span>
+                        LIVE
+                    </div>
+                </div>
+                <div class="video-container" id="videoContainer">
+                    <canvas id="videoCanvas" width="640" height="480"></canvas>
+                    <div class="video-overlay" id="videoOverlay">
+                        <div class="loading-spinner"></div>
+                        <p>Connecting to camera feed…</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bin Status -->
+            <section class="card status-card" id="statusCard">
+                <div class="card-header">
+                    <h2>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        Bin Status
+                    </h2>
+                </div>
+
+                <!-- Circular fill gauge -->
+                <div class="gauge-wrapper">
+                    <div class="gauge-ring" id="gaugeRing">
+                        <svg viewBox="0 0 200 200" class="gauge-svg">
+                            <circle cx="100" cy="100" r="85" class="gauge-bg"/>
+                            <circle cx="100" cy="100" r="85" class="gauge-fill" id="gaugeFill"
+                                    stroke-dasharray="534" stroke-dashoffset="534"/>
+                        </svg>
+                        <div class="gauge-center">
+                            <span class="gauge-value" id="gaugeValue">0</span>
+                            <span class="gauge-unit">%</span>
+                            <span class="gauge-label">Fill Level</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status badge -->
+                <div class="status-badge-wrapper">
+                    <div class="status-badge" id="statusBadge">
+                        <span class="badge-icon" id="badgeIcon">●</span>
+                        <span class="badge-text" id="badgeText">Unknown</span>
+                    </div>
+                </div>
+
+                <!-- Stats grid -->
+                <div class="stats-grid">
+                    <div class="stat-box" id="wasteCountStat">
+                        <div class="stat-number" id="wasteCount">0</div>
+                        <div class="stat-desc">Items Detected</div>
+                    </div>
+                    <div class="stat-box" id="insideCountStat">
+                        <div class="stat-number" id="insideCount">0</div>
+                        <div class="stat-desc">Inside Bin</div>
+                    </div>
+                    <div class="stat-box" id="outsideCountStat">
+                        <div class="stat-number" id="outsideCount">0</div>
+                        <div class="stat-desc">Outside Bin</div>
+                    </div>
+                    <div class="stat-box" id="uptimeStat">
+                        <div class="stat-number" id="uptimeValue">0s</div>
+                        <div class="stat-desc">Uptime</div>
+                    </div>
+                </div>
+
+                <!-- Details -->
+                <div class="detail-line" id="detailLine">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    <span id="detailText">Waiting for data…</span>
+                </div>
+            </section>
+        </div>
+
+        <!-- Row 2: Alerts + Analytics -->
+        <div class="dashboard-grid bottom-grid">
+            <!-- Alerts -->
+            <section class="card alert-card" id="alertCard">
+                <div class="card-header">
+                    <h2>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        Alerts
+                    </h2>
+                    <span class="alert-count-badge" id="alertCountBadge">0</span>
+                </div>
+                <div class="alert-list" id="alertList">
+                    <div class="empty-state">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        <p>No alerts — all bins operating normally</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics -->
+            <section class="card analytics-card" id="analyticsCard">
+                <div class="card-header">
+                    <h2>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                        Analytics
+                    </h2>
+                    <div class="analytics-summary" id="analyticsSummary">
+                        <span class="summary-chip">
+                            <span class="chip-label">Total Alerts</span>
+                            <span class="chip-value" id="totalAlerts">0</span>
+                        </span>
+                        <span class="summary-chip overflow-chip">
+                            <span class="chip-label">Overflows</span>
+                            <span class="chip-value" id="overflowEvents">0</span>
+                        </span>
+                        <span class="summary-chip">
+                            <span class="chip-label">Avg Fill</span>
+                            <span class="chip-value" id="avgFill">0%</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="fillChart"></canvas>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- ═══ Audio for alerts ═══ -->
+    <audio id="alertSound" preload="auto">
+        <!-- Fallback: generate beep via JS -->
+    </audio>
+
+    <!-- ═══ Scripts ═══ -->
+    <script src="/static/components/video-feed.js"></script>
+    <script src="/static/components/bin-status.js"></script>
+    <script src="/static/components/alert-panel.js"></script>
+    <script src="/static/components/analytics.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>

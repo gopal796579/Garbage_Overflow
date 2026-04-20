@@ -1,0 +1,26 @@
+# Dataset configuration template for custom waste detection training
+# Modify paths to point to your dataset location
+
+# Paths (relative or absolute)
+train: ./train/images
+val: ./valid/images
+test: ./test/images  # optional
+
+# Number of classes
+nc: 4
+
+# Class names
+names:
+  0: garbage
+  1: bin_empty
+  2: bin_partial
+  3: bin_overflowing
+
+# Optional: Download script
+# download: https://example.com/dataset.zip
+
+# Notes:
+# - Images should be in JPEG/PNG format
+# - Labels in YOLO format: <class_id> <x_center> <y_center> <width> <height> (normalized)
+# - Aim for at least 500 images per class for good performance
+# - Include variety: lighting, angles, weather, bin types
