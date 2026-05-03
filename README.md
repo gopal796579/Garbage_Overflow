@@ -18,7 +18,7 @@ AI-powered real-time waste bin monitoring using **YOLOv8n** with a premium dark-
 
 ```
 ┌─────────────────┐       WebSocket       ┌──────────────────────┐
-│  React Dashboard │◄────────────────────►│   FastAPI Backend     │
+│  Web Dashboard   │◄────────────────────►│   FastAPI Backend     │
 │  (HTML/CSS/JS)   │   /ws/video, /ws/status│                      │
 │                  │                       │  ┌─ YOLOv8n Detector │
 │  • Live Video    │   REST API            │  ├─ Fill Analyzer    │
@@ -63,6 +63,18 @@ set VIDEO_SOURCE=rtsp://192.168.1.100:554/stream
 
 # Video file
 set VIDEO_SOURCE=path/to/video.mp4
+```
+
+### 4. Optional API Security (recommended)
+
+Protect write endpoints and restrict allowed browser origins:
+
+```bash
+# Comma-separated list of frontend origins allowed by CORS
+set ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+
+# If set, clients must send X-API-Key for write endpoints
+set API_WRITE_KEY=change-me
 ```
 
 ## 📊 API Reference

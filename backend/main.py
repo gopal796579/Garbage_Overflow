@@ -23,7 +23,7 @@ from typing import Set
 # Add parent dir to path so 'backend' package resolves
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +36,8 @@ from backend.config import (
     PORT,
     FRONTEND_DIR,
     TARGET_FPS,
+    ALLOWED_ORIGINS,
+    API_WRITE_KEY,
 )
 from backend.detector.yolo_detector import YOLODetector
 from backend.detector.fill_analyzer import FillAnalyzer
@@ -113,9 +115,10 @@ app = FastAPI(
 # CORS for dev
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 
@@ -212,6 +215,14 @@ async def _broadcast(clients: Set[WebSocket], message: str):
     clients -= disconnected
 
 
+def _validate_write_access(x_api_key: str | None) -> None:
+    """Protect mutation endpoints when API_WRITE_KEY is configured."""
+    if not API_WRITE_KEY:
+        return
+    if x_api_key != API_WRITE_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+
 # ── WebSocket Endpoints ───────────────────────────────────────
 @app.websocket("/ws/video")
 async def ws_video(websocket: WebSocket):
@@ -259,9 +270,12 @@ async def get_alerts():
 
 
 @app.post("/api/alerts/{alert_id}/resolve")
-async def resolve_alert(alert_id: int):
+async def resolve_alert(alert_id: int, x_api_key: str | None = Header(default=None, alias="X-API-Key")):
     """Mark an alert as resolved."""
-    await db_service.resolve_alert(alert_id)
+    _validate_write_access(x_api_key)
+    resolved = await db_service.resolve_alert(alert_id)
+    if not resolved:
+        raise HTTPException(status_code=404, detail="Alert not found")
     return {"status": "resolved", "alert_id": alert_id}
 
 

@@ -88,10 +88,11 @@ async def save_alert(
     return cursor.lastrowid
 
 
-async def resolve_alert(alert_id: int):
+async def resolve_alert(alert_id: int) -> bool:
     db = await get_db()
-    await db.execute("UPDATE alerts SET resolved = 1 WHERE id = ?", (alert_id,))
+    cursor = await db.execute("UPDATE alerts SET resolved = 1 WHERE id = ?", (alert_id,))
     await db.commit()
+    return cursor.rowcount > 0
 
 
 async def get_alerts(limit: int = 50) -> List[Dict[str, Any]]:
