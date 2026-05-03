@@ -25,9 +25,6 @@
         alertPanel = new AlertPanel();
         analytics = new AnalyticsPanel();
 
-        // Store alertPanel globally for resolve buttons
-        window._alertPanel = alertPanel;
-
         // Connect video feed
         videoFeed.connect();
 

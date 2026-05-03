@@ -12,6 +12,8 @@ class AlertPanel {
 
         // Create audio context for alert sounds
         this._audioCtx = null;
+        this._onAlertListClick = this._handleAlertListClick.bind(this);
+        this.alertList.addEventListener('click', this._onAlertListClick);
     }
 
     addAlert(alertData) {
@@ -51,6 +53,14 @@ class AlertPanel {
         }
     }
 
+    _handleAlertListClick(event) {
+        const resolveButton = event.target.closest('.alert-resolve-btn');
+        if (!resolveButton) return;
+        const alertId = Number(resolveButton.dataset.alertId);
+        if (Number.isNaN(alertId)) return;
+        this.resolveAlert(alertId);
+    }
+
     _render() {
         if (this.alerts.length === 0) {
             this.alertList.innerHTML = `
@@ -82,7 +92,7 @@ class AlertPanel {
                             <span>${alert.bin_id || 'BIN-001'}</span>
                             <span>•</span>
                             <span>${Math.round(alert.fill_percentage || 0)}%</span>
-                            ${!alert.resolved ? `<button class="alert-resolve-btn" onclick="window._alertPanel.resolveAlert(${alert.id})">Resolve</button>` : '<span style="color: var(--green)">✓ Resolved</span>'}
+                            ${!alert.resolved ? `<button class="alert-resolve-btn" data-alert-id="${alert.id}" type="button">Resolve</button>` : '<span style="color: var(--green)">✓ Resolved</span>'}
                         </div>
                     </div>
                 </div>
@@ -140,6 +150,7 @@ class AlertPanel {
     }
 
     destroy() {
+        this.alertList.removeEventListener('click', this._onAlertListClick);
         if (this._audioCtx) this._audioCtx.close();
     }
 }
